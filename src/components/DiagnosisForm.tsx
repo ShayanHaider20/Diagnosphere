@@ -106,7 +106,7 @@ const DiagnosisForm = ({ onSubmit }: DiagnosisFormProps) => {
   const formSteps = [
     {
       title: 'Duration & Intensity',
-      description: 'Tell us how long you've had these symptoms and their intensity',
+      description: "Tell us how long you've had these symptoms and their intensity",
       content: (
         <div className="space-y-6">
           <div className="space-y-4">
@@ -218,7 +218,7 @@ const DiagnosisForm = ({ onSubmit }: DiagnosisFormProps) => {
     },
     {
       title: 'Treatment History',
-      description: 'Tell us about any treatments you've tried',
+      description: "Tell us about any treatments you've tried",
       content: (
         <div className="space-y-6">
           <div className="space-y-4">
