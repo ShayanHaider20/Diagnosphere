@@ -16,6 +16,7 @@ import Contact from "./pages/Contact";
 import SkinDisease from "./pages/SkinDisease";
 import SkinCheck from "./pages/SkinCheck";
 import SkinDiagnosis from "./pages/SkinDiagnosis";
+import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 
 // Create a client
@@ -45,6 +46,7 @@ const App = () => (
               <Route path="/skin-disease" element={<SkinDisease />} />
               <Route path="/skin-check" element={<SkinCheck />} />
               <Route path="/diagnosis-results/:id" element={<SkinDiagnosis />} />
+              <Route path="/dashboard" element={<Dashboard />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 
 // Create a base axios instance
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://api.diagnosphere.com',
+  baseURL: 'http://localhost:5000/api', // We'll create an Express backend server
   headers: {
     'Content-Type': 'application/json',
   },

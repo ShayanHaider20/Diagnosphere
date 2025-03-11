@@ -1,188 +1,190 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { cn } from "@/lib/utils";
-import { Menu, X, User, LogOut } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { motion } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Menu, X, LogOut, User } from 'lucide-react';
 
 const Header = () => {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, isAuthenticated, logout } = useAuth();
   const location = useLocation();
-  const { user, logout, isLoading } = useAuth();
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  useEffect(() => {
-    setIsMobileMenuOpen(false);
-  }, [location]);
-
-  const navLinks = [
+  const navItems = [
     { name: 'Home', path: '/' },
     { name: 'About', path: '/about' },
-    { name: 'Skin Disease', path: '/skin-disease' },
-    { name: 'Check My Skin', path: '/skin-check' },
+    { name: 'Skin Diseases', path: '/skin-disease' },
+    { name: 'Check Your Skin', path: '/skin-check', requiresAuth: true },
     { name: 'Contact', path: '/contact' },
   ];
 
+  const isActive = (path: string) => {
+    return location.pathname === path;
+  };
+
   return (
-    <header
-      className={cn(
-        "fixed top-0 left-0 w-full z-50 transition-all duration-300 ease-in-out",
-        isScrolled 
-          ? "bg-black/80 backdrop-blur-md py-3 border-b border-white/10" 
-          : "bg-transparent py-6"
-      )}
-    >
-      <div className="container mx-auto px-6 flex justify-between items-center">
-        <Link 
-          to="/" 
-          className="text-white text-2xl font-bold flex items-center space-x-2 group"
-        >
-          <div className="w-8 h-8 bg-diagnosphere-primary rounded flex items-center justify-center overflow-hidden relative group-hover:scale-110 transition-transform duration-300">
-            <div className="absolute w-full h-full bg-gradient-to-br from-diagnosphere-primary to-diagnosphere-accent animate-flow"></div>
-            <span className="relative font-bold text-white">D</span>
-          </div>
-          <span className="relative">Diagnosphere</span>
-        </Link>
+    <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-white/10">
+      <div className="container mx-auto px-6">
+        <div className="flex items-center justify-between h-20">
+          {/* Logo */}
+          <Link to="/" className="flex items-center">
+            <span className="text-xl font-bold text-white">Diagnosphere</span>
+          </Link>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-8">
-          {navLinks.map((link) => (
-            <Link
-              key={link.name}
-              to={link.path}
-              className={cn(
-                "text-sm font-medium relative py-2 transition-colors duration-300 hover:text-diagnosphere-primary",
-                location.pathname === link.path 
-                  ? "text-diagnosphere-primary" 
-                  : "text-white"
-              )}
-            >
-              {link.name}
-              <span 
-                className={cn(
-                  "absolute bottom-0 left-0 w-full h-0.5 bg-diagnosphere-primary transform scale-x-0 transition-transform duration-300",
-                  location.pathname === link.path && "scale-x-100"
-                )}
-              />
-            </Link>
-          ))}
-        </nav>
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center space-x-1">
+            {navItems.map((item) => (
+              (!item.requiresAuth || isAuthenticated) && (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`px-4 py-2 text-sm rounded-md transition-colors ${
+                    isActive(item.path)
+                      ? 'bg-diagnosphere-primary/20 text-diagnosphere-primary'
+                      : 'text-white/70 hover:text-white hover:bg-white/10'
+                  }`}
+                >
+                  {item.name}
+                </Link>
+              )
+            ))}
+          </nav>
 
-        <div className="hidden md:flex items-center space-x-4">
-          {!isLoading && (
-            user ? (
-              <>
-                <div className="text-white text-sm mr-2">
-                  <span className="text-white/60">Welcome,</span> {user.name}
-                </div>
-                <Button 
-                  variant="ghost" 
-                  className="text-white hover:text-diagnosphere-primary hover:bg-white/5"
+          {/* Auth Buttons or User Menu */}
+          <div className="hidden md:flex items-center space-x-3">
+            {isAuthenticated ? (
+              <div className="flex items-center space-x-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-white/10 text-white hover:bg-white/5"
                   onClick={logout}
                 >
                   <LogOut className="w-4 h-4 mr-2" />
-                  Log out
+                  Logout
+                </Button>
+                <Button
+                  size="sm"
+                  className="bg-diagnosphere-primary hover:bg-diagnosphere-primary/90"
+                  asChild
+                >
+                  <Link to="/dashboard">
+                    <User className="w-4 h-4 mr-2" />
+                    Dashboard
+                  </Link>
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-white/10 text-white hover:bg-white/5"
+                  asChild
+                >
+                  <Link to="/login">Log in</Link>
+                </Button>
+                <Button
+                  size="sm"
+                  className="bg-diagnosphere-primary hover:bg-diagnosphere-primary/90"
+                  asChild
+                >
+                  <Link to="/register">Sign up</Link>
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            className="md:hidden p-2 rounded-md text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+          >
+            {isMenuOpen ? (
+              <X className="w-6 h-6" />
+            ) : (
+              <Menu className="w-6 h-6" />
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Menu */}
+      {isMenuOpen && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.2 }}
+          className="md:hidden py-4 px-6 bg-background/95 backdrop-blur-lg border-b border-white/10"
+        >
+          <nav className="flex flex-col space-y-1 mb-4">
+            {navItems.map((item) => (
+              (!item.requiresAuth || isAuthenticated) && (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`px-4 py-3 rounded-md transition-colors ${
+                    isActive(item.path)
+                      ? 'bg-diagnosphere-primary/20 text-diagnosphere-primary'
+                      : 'text-white/70 hover:text-white hover:bg-white/10'
+                  }`}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {item.name}
+                </Link>
+              )
+            ))}
+          </nav>
+          <div className="flex flex-col space-y-2 pt-4 border-t border-white/10">
+            {isAuthenticated ? (
+              <>
+                <Button
+                  className="bg-diagnosphere-primary hover:bg-diagnosphere-primary/90 w-full"
+                  asChild
+                >
+                  <Link to="/dashboard" onClick={() => setIsMenuOpen(false)}>
+                    <User className="w-4 h-4 mr-2" />
+                    Dashboard
+                  </Link>
+                </Button>
+                <Button
+                  variant="outline"
+                  className="border-white/10 text-white hover:bg-white/5 w-full"
+                  onClick={() => {
+                    logout();
+                    setIsMenuOpen(false);
+                  }}
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
                 </Button>
               </>
             ) : (
               <>
-                <Link to="/login">
-                  <Button 
-                    variant="ghost" 
-                    className="text-white hover:text-diagnosphere-primary hover:bg-white/5"
-                  >
-                    Log in
-                  </Button>
-                </Link>
-                <Link to="/register">
-                  <Button 
-                    className="bg-diagnosphere-primary hover:bg-diagnosphere-primary/90 text-white transition-all duration-300 hover:shadow-lg hover:shadow-diagnosphere-primary/20"
-                  >
+                <Button
+                  className="bg-diagnosphere-primary hover:bg-diagnosphere-primary/90 w-full"
+                  asChild
+                >
+                  <Link to="/register" onClick={() => setIsMenuOpen(false)}>
                     Sign up
-                  </Button>
-                </Link>
-              </>
-            )
-          )}
-        </div>
-        
-        {/* Mobile Menu Button */}
-        <button 
-          className="md:hidden text-white"
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        >
-          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
-      </div>
-
-      {/* Mobile Menu */}
-      <div 
-        className={cn(
-          "fixed inset-0 bg-black bg-opacity-95 z-40 pt-20 px-6 transition-transform duration-300 md:hidden",
-          isMobileMenuOpen ? "translate-y-0" : "-translate-y-full"
-        )}
-      >
-        <nav className="flex flex-col space-y-6 items-center mt-10">
-          {navLinks.map((link) => (
-            <Link
-              key={link.name}
-              to={link.path}
-              className={cn(
-                "text-lg font-medium text-center w-full py-3 px-6 rounded-md transition-colors duration-300",
-                location.pathname === link.path 
-                  ? "text-diagnosphere-primary bg-white/5" 
-                  : "text-white hover:bg-white/5"
-              )}
-            >
-              {link.name}
-            </Link>
-          ))}
-          <hr className="border-white/10 w-full my-4" />
-          
-          {!isLoading && (
-            user ? (
-              <>
-                <div className="w-full text-center text-white mb-2">
-                  <User className="inline-block mr-2 w-4 h-4" />
-                  {user.name}
-                </div>
-                <button 
-                  onClick={logout}
-                  className="w-full bg-diagnosphere-primary/10 text-diagnosphere-primary hover:bg-diagnosphere-primary/20 py-3 rounded-md text-center transition-all duration-300 flex justify-center items-center"
+                  </Link>
+                </Button>
+                <Button
+                  variant="outline"
+                  className="border-white/10 text-white hover:bg-white/5 w-full"
+                  asChild
                 >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Log out
-                </button>
+                  <Link to="/login" onClick={() => setIsMenuOpen(false)}>
+                    Log in
+                  </Link>
+                </Button>
               </>
-            ) : (
-              <>
-                <Link 
-                  to="/login" 
-                  className="w-full text-center py-3 text-white hover:text-diagnosphere-primary transition-colors duration-300"
-                >
-                  Log in
-                </Link>
-                <Link 
-                  to="/register" 
-                  className="w-full bg-diagnosphere-primary hover:bg-diagnosphere-primary/90 text-white py-3 rounded-md text-center transition-all duration-300"
-                >
-                  Sign up
-                </Link>
-              </>
-            )
-          )}
-        </nav>
-      </div>
+            )}
+          </div>
+        </motion.div>
+      )}
     </header>
   );
 };

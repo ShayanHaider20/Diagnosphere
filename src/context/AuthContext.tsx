@@ -51,7 +51,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Redirect unauthenticated users from protected routes
   useEffect(() => {
     if (!isLoading && !user) {
-      const protectedRoutes = ['/skin-check', '/diagnosis-results'];
+      const protectedRoutes = ['/skin-check', '/diagnosis-results', '/dashboard'];
       const isProtectedRoute = protectedRoutes.some(route => location.pathname.startsWith(route));
       
       if (isProtectedRoute) {
@@ -69,8 +69,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(response.user);
       toast.success('Login successful!');
       
-      // Redirect to the page they were trying to access or home
-      const from = location.state?.from || '/';
+      // Redirect to the page they were trying to access or dashboard
+      const from = location.state?.from || '/dashboard';
       navigate(from);
     } catch (error) {
       console.error('Login failed:', error);
@@ -87,7 +87,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('auth_token', response.token);
       setUser(response.user);
       toast.success('Registration successful!');
-      navigate('/');
+      navigate('/dashboard');
     } catch (error) {
       console.error('Registration failed:', error);
       throw error;
