@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { Loader2, UserPlus } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 const Register = () => {
   const [name, setName] = useState('');
@@ -17,23 +18,25 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { register } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     
     if (!name || !email || !password || !confirmPassword) {
-      toast.error('Please fill in all fields');
+      setError('Please fill in all fields');
       return;
     }
     
     if (password !== confirmPassword) {
-      toast.error('Passwords do not match');
+      setError('Passwords do not match');
       return;
     }
     
     if (password.length < 8) {
-      toast.error('Password must be at least 8 characters long');
+      setError('Password must be at least 8 characters long');
       return;
     }
     
@@ -43,8 +46,8 @@ const Register = () => {
       await register(name, email, password);
       // Redirect happens in the AuthContext after successful registration
     } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || 'Failed to create account. Please try again.';
-      toast.error(errorMessage);
+      const errorMessage = error?.message || 'Failed to create account. Please try again.';
+      setError(errorMessage);
       setIsSubmitting(false);
     }
   };
@@ -65,6 +68,13 @@ const Register = () => {
               <h1 className="text-2xl font-bold text-white mb-2">Create an Account</h1>
               <p className="text-gray-400">Join Diagnosphere to track your skin health</p>
             </div>
+            
+            {error && (
+              <Alert variant="destructive" className="mb-6 bg-red-500/10 border-red-500/30 text-red-200">
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
             
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">

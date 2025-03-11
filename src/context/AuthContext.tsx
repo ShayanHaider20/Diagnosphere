@@ -36,8 +36,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
           const userData = await authAPI.getCurrentUser();
           setUser(userData);
-        } catch (error) {
-          console.error('Authentication check failed:', error);
+        } catch (error: any) {
+          console.error('Authentication check failed:', error.message);
           localStorage.removeItem('auth_token');
         }
       }
@@ -72,8 +72,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Redirect to the page they were trying to access or dashboard
       const from = location.state?.from || '/dashboard';
       navigate(from);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login failed:', error);
+      // Display specific error message
+      if (error.message === "Cannot connect to server. Please make sure the backend is running.") {
+        toast.error("Server connection failed. Please make sure the backend server is running.");
+      } else if (error.message.includes("Invalid credentials")) {
+        toast.error("Invalid email or password. Please try again.");
+      } else if (error.message.includes("not found")) {
+        toast.error("Account not found. Please check your email or sign up.");
+      } else {
+        toast.error(error.message || 'Failed to log in. Please try again.');
+      }
       throw error;
     } finally {
       setIsLoading(false);
@@ -88,8 +98,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(response.user);
       toast.success('Registration successful!');
       navigate('/dashboard');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Registration failed:', error);
+      // Display specific error message
+      if (error.message === "Cannot connect to server. Please make sure the backend is running.") {
+        toast.error("Server connection failed. Please make sure the backend server is running.");
+      } else if (error.message.includes("already exists")) {
+        toast.error("Email already registered. Please use a different email or log in.");
+      } else if (error.message.includes("validation")) {
+        toast.error("Invalid registration data. Please check your inputs.");
+      } else {
+        toast.error(error.message || 'Failed to create account. Please try again.');
+      }
       throw error;
     } finally {
       setIsLoading(false);
@@ -104,8 +124,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
       toast.success('Logged out successfully');
       navigate('/login');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Logout failed:', error);
+      // Even if the server request fails, we'll still log the user out locally
+      localStorage.removeItem('auth_token');
+      setUser(null);
+      navigate('/login');
     } finally {
       setIsLoading(false);
     }

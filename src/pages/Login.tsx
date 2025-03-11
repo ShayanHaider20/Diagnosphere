@@ -10,19 +10,22 @@ import { toast } from 'sonner';
 import { Loader2, LogIn } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { login } = useAuth();
   const location = useLocation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     
     if (!email || !password) {
-      toast.error('Please fill in all fields');
+      setError('Please fill in all fields');
       return;
     }
     
@@ -32,8 +35,8 @@ const Login = () => {
       await login(email, password);
       // Redirect happens in the AuthContext after successful login
     } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || 'Failed to log in. Please check your credentials.';
-      toast.error(errorMessage);
+      const errorMessage = error?.message || 'Failed to log in. Please check your credentials.';
+      setError(errorMessage);
       setIsSubmitting(false);
     }
   };
@@ -54,6 +57,13 @@ const Login = () => {
               <h1 className="text-2xl font-bold text-white mb-2">Log In</h1>
               <p className="text-gray-400">Welcome back to Diagnosphere</p>
             </div>
+            
+            {error && (
+              <Alert variant="destructive" className="mb-6 bg-red-500/10 border-red-500/30 text-red-200">
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
             
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">

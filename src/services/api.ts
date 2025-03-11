@@ -2,7 +2,7 @@
 import axios from 'axios';
 import { toast } from 'sonner';
 
-// Create a base axios instance
+// Create a base axios instance with the MongoDB URI
 const api = axios.create({
   baseURL: 'http://localhost:5000/api', // We'll create an Express backend server
   headers: {
@@ -28,35 +28,63 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Handle network errors (server not running, etc.)
+    if (error.code === 'ERR_NETWORK') {
+      return Promise.reject({
+        message: "Cannot connect to server. Please make sure the backend is running."
+      });
+    }
+    
+    // Handle API errors
     const message = 
       error.response?.data?.message || 
+      error.message ||
       "An unexpected error occurred. Please try again.";
     
-    toast.error(message);
-    return Promise.reject(error);
+    // Don't toast errors here, let the components handle them
+    return Promise.reject({ message });
   }
 );
 
 // Auth endpoints
 export const authAPI = {
   login: async (email: string, password: string) => {
-    const response = await api.post('/auth/login', { email, password });
-    return response.data;
+    try {
+      const response = await api.post('/auth/login', { email, password });
+      return response.data;
+    } catch (error: any) {
+      throw error;
+    }
   },
   
   register: async (name: string, email: string, password: string) => {
-    const response = await api.post('/auth/register', { name, email, password });
-    return response.data;
+    try {
+      const response = await api.post('/auth/register', { name, email, password });
+      return response.data;
+    } catch (error: any) {
+      throw error;
+    }
   },
   
   logout: async () => {
-    const response = await api.post('/auth/logout');
-    return response.data;
+    try {
+      const response = await api.post('/auth/logout');
+      return response.data;
+    } catch (error) {
+      // For logout, we don't want to prevent the user from logging out
+      // even if the server request fails
+      console.error('Logout API error:', error);
+      return { success: true }; // Return success anyway
+    }
   },
   
   getCurrentUser: async () => {
-    const response = await api.get('/auth/user');
-    return response.data;
+    try {
+      const response = await api.get('/auth/user');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 };
 
