@@ -2,13 +2,15 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from "@/lib/utils";
-import { Menu, X } from 'lucide-react';
+import { Menu, X, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/context/AuthContext';
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const { user, logout, isLoading } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -77,21 +79,41 @@ const Header = () => {
         </nav>
 
         <div className="hidden md:flex items-center space-x-4">
-          <Link to="/login">
-            <Button 
-              variant="ghost" 
-              className="text-white hover:text-diagnosphere-primary hover:bg-white/5"
-            >
-              Log in
-            </Button>
-          </Link>
-          <Link to="/register">
-            <Button 
-              className="bg-diagnosphere-primary hover:bg-diagnosphere-primary/90 text-white transition-all duration-300 hover:shadow-lg hover:shadow-diagnosphere-primary/20"
-            >
-              Sign up
-            </Button>
-          </Link>
+          {!isLoading && (
+            user ? (
+              <>
+                <div className="text-white text-sm mr-2">
+                  <span className="text-white/60">Welcome,</span> {user.name}
+                </div>
+                <Button 
+                  variant="ghost" 
+                  className="text-white hover:text-diagnosphere-primary hover:bg-white/5"
+                  onClick={logout}
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Log out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link to="/login">
+                  <Button 
+                    variant="ghost" 
+                    className="text-white hover:text-diagnosphere-primary hover:bg-white/5"
+                  >
+                    Log in
+                  </Button>
+                </Link>
+                <Link to="/register">
+                  <Button 
+                    className="bg-diagnosphere-primary hover:bg-diagnosphere-primary/90 text-white transition-all duration-300 hover:shadow-lg hover:shadow-diagnosphere-primary/20"
+                  >
+                    Sign up
+                  </Button>
+                </Link>
+              </>
+            )
+          )}
         </div>
         
         {/* Mobile Menu Button */}
@@ -126,18 +148,39 @@ const Header = () => {
             </Link>
           ))}
           <hr className="border-white/10 w-full my-4" />
-          <Link 
-            to="/login" 
-            className="w-full text-center py-3 text-white hover:text-diagnosphere-primary transition-colors duration-300"
-          >
-            Log in
-          </Link>
-          <Link 
-            to="/register" 
-            className="w-full bg-diagnosphere-primary hover:bg-diagnosphere-primary/90 text-white py-3 rounded-md text-center transition-all duration-300"
-          >
-            Sign up
-          </Link>
+          
+          {!isLoading && (
+            user ? (
+              <>
+                <div className="w-full text-center text-white mb-2">
+                  <User className="inline-block mr-2 w-4 h-4" />
+                  {user.name}
+                </div>
+                <button 
+                  onClick={logout}
+                  className="w-full bg-diagnosphere-primary/10 text-diagnosphere-primary hover:bg-diagnosphere-primary/20 py-3 rounded-md text-center transition-all duration-300 flex justify-center items-center"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Log out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link 
+                  to="/login" 
+                  className="w-full text-center py-3 text-white hover:text-diagnosphere-primary transition-colors duration-300"
+                >
+                  Log in
+                </Link>
+                <Link 
+                  to="/register" 
+                  className="w-full bg-diagnosphere-primary hover:bg-diagnosphere-primary/90 text-white py-3 rounded-md text-center transition-all duration-300"
+                >
+                  Sign up
+                </Link>
+              </>
+            )
+          )}
         </nav>
       </div>
     </header>

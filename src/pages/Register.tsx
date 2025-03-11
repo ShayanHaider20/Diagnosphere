@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, UserPlus } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
@@ -42,8 +42,9 @@ const Register = () => {
     try {
       await register(name, email, password);
       // Redirect happens in the AuthContext after successful registration
-    } catch (error) {
-      console.error('Registration error:', error);
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || 'Failed to create account. Please try again.';
+      toast.error(errorMessage);
       setIsSubmitting(false);
     }
   };
@@ -133,7 +134,10 @@ const Register = () => {
                     Creating account...
                   </>
                 ) : (
-                  'Sign up'
+                  <>
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Sign up
+                  </>
                 )}
               </Button>
             </form>

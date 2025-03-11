@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { authAPI } from '@/services/api';
 import { toast } from 'sonner';
 
@@ -25,6 +25,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Check if the user is authenticated on initial load
   useEffect(() => {
@@ -47,6 +48,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkAuth();
   }, []);
 
+  // Redirect unauthenticated users from protected routes
+  useEffect(() => {
+    if (!isLoading && !user) {
+      const protectedRoutes = ['/skin-check', '/diagnosis-results'];
+      const isProtectedRoute = protectedRoutes.some(route => location.pathname.startsWith(route));
+      
+      if (isProtectedRoute) {
+        toast.error('Please log in to access this page');
+        navigate('/login', { state: { from: location.pathname } });
+      }
+    }
+  }, [user, isLoading, navigate, location.pathname]);
+
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
@@ -54,7 +68,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('auth_token', response.token);
       setUser(response.user);
       toast.success('Login successful!');
-      navigate('/');
+      
+      // Redirect to the page they were trying to access or home
+      const from = location.state?.from || '/';
+      navigate(from);
     } catch (error) {
       console.error('Login failed:', error);
       throw error;

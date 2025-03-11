@@ -11,6 +11,9 @@ import { AnimatePresence } from "framer-motion";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import About from "./pages/About";
+import Contact from "./pages/Contact";
+import SkinDisease from "./pages/SkinDisease";
 import SkinCheck from "./pages/SkinCheck";
 import SkinDiagnosis from "./pages/SkinDiagnosis";
 import NotFound from "./pages/NotFound";
@@ -37,6 +40,9 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/skin-disease" element={<SkinDisease />} />
               <Route path="/skin-check" element={<SkinCheck />} />
               <Route path="/diagnosis-results/:id" element={<SkinDiagnosis />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
