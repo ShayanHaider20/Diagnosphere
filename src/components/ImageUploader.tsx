@@ -1,9 +1,9 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { Upload, Camera, X, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 
 interface ImageUploaderProps {
   onImageSelected: (file: File) => void;
@@ -20,7 +20,6 @@ const ImageUploader = ({ onImageSelected, className }: ImageUploaderProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   
-  // Clear selected image and camera stream on component unmount
   useEffect(() => {
     return () => {
       if (selectedImage) {
@@ -66,18 +65,15 @@ const ImageUploader = ({ onImageSelected, className }: ImageUploaderProps) => {
 
   const openCamera = async () => {
     try {
-      // First stop any existing stream
       stopCameraStream();
       
-      // Then request camera access
       const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } // Prefer rear camera on mobile
+        video: { facingMode: 'environment' } 
       });
       
       streamRef.current = stream;
       setIsCameraOpen(true);
       
-      // In the next render cycle, set the stream to the video element
       setTimeout(() => {
         if (videoRef.current && streamRef.current) {
           videoRef.current.srcObject = streamRef.current;
@@ -86,7 +82,6 @@ const ImageUploader = ({ onImageSelected, className }: ImageUploaderProps) => {
     } catch (error) {
       console.error('Camera access denied or not available:', error);
       toast.error('Camera access denied or not available. Please check your permissions.');
-      // Fallback to file picker
       if (fileInputRef.current) {
         fileInputRef.current.click();
       }
@@ -102,14 +97,11 @@ const ImageUploader = ({ onImageSelected, className }: ImageUploaderProps) => {
     
     if (!context) return;
     
-    // Set canvas dimensions to match video dimensions
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     
-    // Draw the current video frame to the canvas
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
     
-    // Convert canvas to blob
     canvas.toBlob((blob) => {
       if (blob) {
         const file = new File([blob], "camera-capture.jpg", { type: "image/jpeg" });
@@ -128,7 +120,6 @@ const ImageUploader = ({ onImageSelected, className }: ImageUploaderProps) => {
     
     const reader = new FileReader();
     reader.onload = () => {
-      // Create preview URL
       const imageUrl = URL.createObjectURL(file);
       setSelectedImage(imageUrl);
       onImageSelected(file);
@@ -163,7 +154,6 @@ const ImageUploader = ({ onImageSelected, className }: ImageUploaderProps) => {
         className="hidden"
       />
       
-      {/* Hidden canvas for capturing camera image */}
       <canvas ref={canvasRef} className="hidden" />
       
       <AnimatePresence mode="wait">
