@@ -101,7 +101,7 @@
 }
 
 .text-gradient {
-  @apply bg-gradient-to-r from-diagnosphere-primary to-diagnosphere-accent bg-clip-text text-transparent;
+  @apply bg-gradient-to-r from-diagnosphere-primary via-diagnosphere-secondary to-diagnosphere-accent bg-clip-text text-transparent;
 }
 
 .page-transition-enter {

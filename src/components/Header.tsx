@@ -24,12 +24,12 @@ const Header = () => {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-white/10">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-diagnosphere-dark/80 backdrop-blur-lg border-b border-diagnosphere-primary/30">
       <div className="container mx-auto px-6">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center">
-            <span className="text-xl font-bold text-white">Diagnosphere</span>
+            <span className="text-xl font-bold text-gradient">Diagnosphere</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -41,8 +41,8 @@ const Header = () => {
                   to={item.path}
                   className={`px-4 py-2 text-sm rounded-md transition-colors ${
                     isActive(item.path)
-                      ? 'bg-diagnosphere-primary/20 text-diagnosphere-primary'
-                      : 'text-white/70 hover:text-white hover:bg-white/10'
+                      ? 'bg-diagnosphere-primary/20 text-diagnosphere-primary font-medium'
+                      : 'text-diagnosphere-light/80 hover:text-diagnosphere-light hover:bg-diagnosphere-primary/10'
                   }`}
                 >
                   {item.name}
@@ -58,7 +58,7 @@ const Header = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="border-white/10 text-white hover:bg-white/5"
+                  className="border-diagnosphere-primary/30 text-diagnosphere-light hover:bg-diagnosphere-primary/10"
                   onClick={logout}
                 >
                   <LogOut className="w-4 h-4 mr-2" />
@@ -66,7 +66,7 @@ const Header = () => {
                 </Button>
                 <Button
                   size="sm"
-                  className="bg-diagnosphere-primary hover:bg-diagnosphere-primary/90"
+                  className="bg-diagnosphere-primary hover:bg-diagnosphere-primary/90 text-diagnosphere-light"
                   asChild
                 >
                   <Link to="/dashboard">
@@ -80,14 +80,14 @@ const Header = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="border-white/10 text-white hover:bg-white/5"
+                  className="border-diagnosphere-primary/30 text-diagnosphere-light hover:bg-diagnosphere-primary/10"
                   asChild
                 >
                   <Link to="/login">Log in</Link>
                 </Button>
                 <Button
                   size="sm"
-                  className="bg-diagnosphere-primary hover:bg-diagnosphere-primary/90"
+                  className="bg-diagnosphere-primary hover:bg-diagnosphere-primary/90 text-diagnosphere-light"
                   asChild
                 >
                   <Link to="/register">Sign up</Link>
@@ -98,7 +98,7 @@ const Header = () => {
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden p-2 rounded-md text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+            className="md:hidden p-2 rounded-md text-diagnosphere-light/80 hover:text-diagnosphere-light hover:bg-diagnosphere-primary/10 transition-colors"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
             {isMenuOpen ? (
@@ -117,7 +117,7 @@ const Header = () => {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.2 }}
-          className="md:hidden py-4 px-6 bg-background/95 backdrop-blur-lg border-b border-white/10"
+          className="md:hidden py-4 px-6 bg-diagnosphere-dark/95 backdrop-blur-lg border-b border-diagnosphere-primary/30"
         >
           <nav className="flex flex-col space-y-1 mb-4">
             {navItems.map((item) => (
@@ -127,8 +127,8 @@ const Header = () => {
                   to={item.path}
                   className={`px-4 py-3 rounded-md transition-colors ${
                     isActive(item.path)
-                      ? 'bg-diagnosphere-primary/20 text-diagnosphere-primary'
-                      : 'text-white/70 hover:text-white hover:bg-white/10'
+                      ? 'bg-diagnosphere-primary/20 text-diagnosphere-primary font-medium'
+                      : 'text-diagnosphere-light/80 hover:text-diagnosphere-light hover:bg-diagnosphere-primary/10'
                   }`}
                   onClick={() => setIsMenuOpen(false)}
                 >
@@ -137,11 +137,11 @@ const Header = () => {
               )
             ))}
           </nav>
-          <div className="flex flex-col space-y-2 pt-4 border-t border-white/10">
+          <div className="flex flex-col space-y-2 pt-4 border-t border-diagnosphere-primary/30">
             {isAuthenticated ? (
               <>
                 <Button
-                  className="bg-diagnosphere-primary hover:bg-diagnosphere-primary/90 w-full"
+                  className="bg-diagnosphere-primary hover:bg-diagnosphere-primary/90 text-diagnosphere-light w-full"
                   asChild
                 >
                   <Link to="/dashboard" onClick={() => setIsMenuOpen(false)}>
@@ -151,7 +151,7 @@ const Header = () => {
                 </Button>
                 <Button
                   variant="outline"
-                  className="border-white/10 text-white hover:bg-white/5 w-full"
+                  className="border-diagnosphere-primary/30 text-diagnosphere-light hover:bg-diagnosphere-primary/10 w-full"
                   onClick={() => {
                     logout();
                     setIsMenuOpen(false);
@@ -164,7 +164,7 @@ const Header = () => {
             ) : (
               <>
                 <Button
-                  className="bg-diagnosphere-primary hover:bg-diagnosphere-primary/90 w-full"
+                  className="bg-diagnosphere-primary hover:bg-diagnosphere-primary/90 text-diagnosphere-light w-full"
                   asChild
                 >
                   <Link to="/register" onClick={() => setIsMenuOpen(false)}>
@@ -173,7 +173,7 @@ const Header = () => {
                 </Button>
                 <Button
                   variant="outline"
-                  className="border-white/10 text-white hover:bg-white/5 w-full"
+                  className="border-diagnosphere-primary/30 text-diagnosphere-light hover:bg-diagnosphere-primary/10 w-full"
                   asChild
                 >
                   <Link to="/login" onClick={() => setIsMenuOpen(false)}>
