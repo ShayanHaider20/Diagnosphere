@@ -8,15 +8,12 @@ const DiagnosisActions = () => {
       <Link to="/skin-check">
         <Button 
           variant="outline" 
-          className="mr-4 border-white/10 text-white hover:bg-white/5"
+          className="mr-4"
         >
           Start a New Diagnosis
         </Button>
       </Link>
-      <Button 
-        className="bg-diagnosphere-primary hover:bg-diagnosphere-primary/90"
-        asChild
-      >
+      <Button asChild>
         <Link to="/dashboard">View Your History</Link>
       </Button>
     </div>

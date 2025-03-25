@@ -12,21 +12,21 @@ const DiagnosisTabs = ({ activeTab, onTabChange }: DiagnosisTabsProps) => {
       <div className="flex space-x-1 overflow-x-auto scrollbar-none">
         <Button 
           variant={activeTab === 'overview' ? 'default' : 'ghost'} 
-          className={activeTab === 'overview' ? 'bg-diagnosphere-primary text-white' : 'text-white/70 hover:text-white hover:bg-white/5'}
+          className={activeTab === 'overview' ? '' : 'text-white/70 hover:text-white hover:bg-white/5'}
           onClick={() => onTabChange('overview')}
         >
           Overview
         </Button>
         <Button 
           variant={activeTab === 'details' ? 'default' : 'ghost'} 
-          className={activeTab === 'details' ? 'bg-diagnosphere-primary text-white' : 'text-white/70 hover:text-white hover:bg-white/5'} 
+          className={activeTab === 'details' ? '' : 'text-white/70 hover:text-white hover:bg-white/5'} 
           onClick={() => onTabChange('details')}
         >
           Analysis Details
         </Button>
         <Button 
           variant={activeTab === 'treatments' ? 'default' : 'ghost'} 
-          className={activeTab === 'treatments' ? 'bg-diagnosphere-primary text-white' : 'text-white/70 hover:text-white hover:bg-white/5'} 
+          className={activeTab === 'treatments' ? '' : 'text-white/70 hover:text-white hover:bg-white/5'} 
           onClick={() => onTabChange('treatments')}
         >
           Treatment Options
