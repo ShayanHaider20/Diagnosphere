@@ -30,7 +30,6 @@ const DiagnosisHeader = ({ id, date, onShare, onPrint, onDownload }: DiagnosisHe
         <Button 
           variant="outline" 
           size="sm" 
-          className="border-white/10 text-white hover:bg-white/5"
           onClick={onPrint}
         >
           <Printer className="w-4 h-4 mr-1" />
@@ -39,7 +38,6 @@ const DiagnosisHeader = ({ id, date, onShare, onPrint, onDownload }: DiagnosisHe
         <Button 
           variant="outline" 
           size="sm" 
-          className="border-white/10 text-white hover:bg-white/5"
           onClick={onShare}
         >
           <Share2 className="w-4 h-4 mr-1" />
@@ -47,7 +45,6 @@ const DiagnosisHeader = ({ id, date, onShare, onPrint, onDownload }: DiagnosisHe
         </Button>
         <Button 
           size="sm" 
-          className="bg-diagnosphere-primary hover:bg-diagnosphere-primary/90"
           onClick={onDownload}
         >
           <Download className="w-4 h-4 mr-1" />

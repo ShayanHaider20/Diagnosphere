@@ -19,7 +19,7 @@ const DiagnosisError = ({ error }: DiagnosisErrorProps) => {
           <h2 className="text-xl font-semibold text-white mb-2">Diagnosis Not Found</h2>
           <p className="text-gray-400 mb-6">{error}</p>
           <Link to="/skin-check">
-            <Button className="bg-diagnosphere-primary hover:bg-diagnosphere-primary/90">
+            <Button>
               Try a New Diagnosis
             </Button>
           </Link>
