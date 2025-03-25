@@ -14,16 +14,29 @@ const ImageUploader = ({ onImageSelected, className }: ImageUploaderProps) => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   
-  // Clear selected image on component unmount
+  // Clear selected image and camera stream on component unmount
   useEffect(() => {
     return () => {
       if (selectedImage) {
         URL.revokeObjectURL(selectedImage);
       }
+      stopCameraStream();
     };
   }, [selectedImage]);
+
+  const stopCameraStream = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    setIsCameraOpen(false);
+  };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -53,19 +66,57 @@ const ImageUploader = ({ onImageSelected, className }: ImageUploaderProps) => {
 
   const openCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      // In a real app, you would use this stream to capture an image
-      // For this example, we'll just open the file picker
-      if (fileInputRef.current) {
-        fileInputRef.current.click();
-      }
+      // First stop any existing stream
+      stopCameraStream();
+      
+      // Then request camera access
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment' } // Prefer rear camera on mobile
+      });
+      
+      streamRef.current = stream;
+      setIsCameraOpen(true);
+      
+      // In the next render cycle, set the stream to the video element
+      setTimeout(() => {
+        if (videoRef.current && streamRef.current) {
+          videoRef.current.srcObject = streamRef.current;
+        }
+      }, 0);
     } catch (error) {
       console.error('Camera access denied or not available:', error);
+      toast.error('Camera access denied or not available. Please check your permissions.');
       // Fallback to file picker
       if (fileInputRef.current) {
         fileInputRef.current.click();
       }
     }
+  };
+  
+  const captureImage = () => {
+    if (!videoRef.current || !canvasRef.current) return;
+    
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const context = canvas.getContext('2d');
+    
+    if (!context) return;
+    
+    // Set canvas dimensions to match video dimensions
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    // Draw the current video frame to the canvas
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    // Convert canvas to blob
+    canvas.toBlob((blob) => {
+      if (blob) {
+        const file = new File([blob], "camera-capture.jpg", { type: "image/jpeg" });
+        processImage(file);
+        stopCameraStream();
+      }
+    }, 'image/jpeg', 0.95);
   };
 
   const processImage = (file: File) => {
@@ -112,8 +163,43 @@ const ImageUploader = ({ onImageSelected, className }: ImageUploaderProps) => {
         className="hidden"
       />
       
+      {/* Hidden canvas for capturing camera image */}
+      <canvas ref={canvasRef} className="hidden" />
+      
       <AnimatePresence mode="wait">
-        {!selectedImage ? (
+        {isCameraOpen ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="relative rounded-xl overflow-hidden border border-white/20 bg-black"
+          >
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              className="w-full h-[400px] object-cover"
+            />
+            <div className="absolute bottom-0 left-0 right-0 p-4 flex justify-center space-x-4 bg-gradient-to-t from-black/60 to-transparent">
+              <Button
+                type="button"
+                onClick={stopCameraStream}
+                className="bg-white/20 hover:bg-white/30 text-white"
+              >
+                <X className="mr-2 h-4 w-4" />
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={captureImage}
+                className="bg-diagnosphere-primary hover:bg-diagnosphere-primary/90"
+              >
+                <Camera className="mr-2 h-4 w-4" />
+                Take Photo
+              </Button>
+            </div>
+          </motion.div>
+        ) : !selectedImage ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
