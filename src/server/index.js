@@ -16,12 +16,33 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// MongoDB Connection
+// MongoDB Connection with error handling and retry logic
 const MONGODB_URI = 'mongodb+srv://admin:admin@fyp.x57l7.mongodb.net/?retryWrites=true&w=majority&appName=FYP';
 
-mongoose.connect(MONGODB_URI)
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('MongoDB connection error:', err));
+const connectWithRetry = () => {
+  mongoose.connect(MONGODB_URI)
+    .then(() => {
+      console.log('Connected to MongoDB successfully');
+    })
+    .catch(err => {
+      console.error('MongoDB connection error:', err);
+      console.log('Retrying connection in 5 seconds...');
+      setTimeout(connectWithRetry, 5000);
+    });
+};
+
+// Initial connection
+connectWithRetry();
+
+// Mongoose connection event handlers for better error reporting
+mongoose.connection.on('error', (err) => {
+  console.error('MongoDB connection error:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.log('MongoDB disconnected, attempting to reconnect...');
+  connectWithRetry();
+});
 
 // User model
 const userSchema = new mongoose.Schema({
@@ -35,8 +56,8 @@ const User = mongoose.model('User', userSchema);
 
 // Diagnosis model
 const diagnosisSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  imageUrl: String,
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  imageUrl: { type: String, required: true },
   symptoms: Object,
   results: Object,
   createdAt: { type: Date, default: Date.now }
@@ -47,7 +68,7 @@ const Diagnosis = mongoose.model('Diagnosis', diagnosisSchema);
 // JWT Secret
 const JWT_SECRET = 'diagnosphere-secret-key'; // In production, this should be in environment variables
 
-// Set up multer for image uploads
+// Set up multer for image uploads with better error handling
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     const uploadDir = path.join(__dirname, 'uploads');
@@ -61,7 +82,10 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ storage: storage });
+const upload = multer({ 
+  storage: storage,
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+});
 
 // Auth routes
 app.post('/api/auth/register', async (req, res) => {
@@ -150,7 +174,7 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// Authentication middleware
+// Authentication middleware with improved error handling
 const auth = async (req, res, next) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
@@ -170,7 +194,13 @@ const auth = async (req, res, next) => {
     req.userId = user._id;
     next();
   } catch (error) {
-    res.status(401).json({ message: 'Token is not valid' });
+    console.error('Authentication error:', error);
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ message: 'Invalid token' });
+    } else if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ message: 'Token has expired' });
+    }
+    res.status(401).json({ message: 'Authentication failed' });
   }
 };
 
@@ -178,12 +208,16 @@ const auth = async (req, res, next) => {
 app.get('/api/auth/user', auth, async (req, res) => {
   try {
     const user = await User.findById(req.userId).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
     res.json({
       id: user._id,
       name: user.name,
       email: user.email,
     });
   } catch (error) {
+    console.error('Get user error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -194,7 +228,7 @@ app.post('/api/auth/logout', (req, res) => {
 });
 
 // Diagnosis routes
-app.post('/api/diagnosis/upload', auth, upload.single('image'), (req, res) => {
+app.post('/api/diagnosis/upload', auth, upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No image uploaded' });
@@ -202,16 +236,19 @@ app.post('/api/diagnosis/upload', auth, upload.single('image'), (req, res) => {
     
     const imageUrl = `/uploads/${req.file.filename}`;
     
-    // Create a new diagnosis entry
+    // Create a new diagnosis entry with proper error handling
     const diagnosis = new Diagnosis({
       user: req.userId,
       imageUrl,
     });
     
-    diagnosis.save();
+    const savedDiagnosis = await diagnosis.save();
+    if (!savedDiagnosis) {
+      return res.status(500).json({ message: 'Failed to save diagnosis' });
+    }
     
     res.json({
-      diagnosisId: diagnosis._id,
+      diagnosisId: savedDiagnosis._id,
       imageUrl,
       message: 'Image uploaded successfully',
     });
@@ -223,6 +260,10 @@ app.post('/api/diagnosis/upload', auth, upload.single('image'), (req, res) => {
 
 app.post('/api/diagnosis/:id/symptoms', auth, async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: 'Invalid diagnosis ID' });
+    }
+    
     const diagnosis = await Diagnosis.findById(req.params.id);
     
     if (!diagnosis) {
@@ -230,14 +271,11 @@ app.post('/api/diagnosis/:id/symptoms', auth, async (req, res) => {
     }
     
     if (diagnosis.user.toString() !== req.userId.toString()) {
-      return res.status(403).json({ message: 'Not authorized' });
+      return res.status(403).json({ message: 'Not authorized to access this diagnosis' });
     }
     
     // Save symptoms data
     diagnosis.symptoms = req.body;
-    
-    // Placeholder for ML model processing
-    // In a real application, you would process the image and symptoms here
     
     // Simulate model results (in real app, this would come from TensorFlow.js)
     diagnosis.results = {
@@ -256,11 +294,14 @@ app.post('/api/diagnosis/:id/symptoms', auth, async (req, res) => {
       ]
     };
     
-    await diagnosis.save();
+    const updatedDiagnosis = await diagnosis.save();
+    if (!updatedDiagnosis) {
+      return res.status(500).json({ message: 'Failed to save symptoms and results' });
+    }
     
     res.json({
-      diagnosisId: diagnosis._id,
-      results: diagnosis.results,
+      diagnosisId: updatedDiagnosis._id,
+      results: updatedDiagnosis.results,
     });
   } catch (error) {
     console.error('Symptoms submission error:', error);
@@ -270,6 +311,10 @@ app.post('/api/diagnosis/:id/symptoms', auth, async (req, res) => {
 
 app.get('/api/diagnosis/:id/results', auth, async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: 'Invalid diagnosis ID' });
+    }
+    
     const diagnosis = await Diagnosis.findById(req.params.id);
     
     if (!diagnosis) {
@@ -277,7 +322,7 @@ app.get('/api/diagnosis/:id/results', auth, async (req, res) => {
     }
     
     if (diagnosis.user.toString() !== req.userId.toString()) {
-      return res.status(403).json({ message: 'Not authorized' });
+      return res.status(403).json({ message: 'Not authorized to access this diagnosis' });
     }
     
     if (!diagnosis.results) {
@@ -304,10 +349,26 @@ app.get('/api/diagnosis/history', auth, async (req, res) => {
   }
 });
 
-// Static file serving for uploads
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok',
+    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+  });
+});
+
+// Serve static files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Start server
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({ message: 'Internal server error' });
+});
+
+// Start server with better error handling
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+}).on('error', (err) => {
+  console.error('Server error:', err);
 });

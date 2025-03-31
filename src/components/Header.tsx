@@ -29,7 +29,11 @@ const Header = () => {
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center">
-            <span className="text-xl font-bold text-gradient">Diagnosphere</span>
+            <img 
+              src="/lovable-uploads/9134d5e4-4e06-4def-9d60-b97b5f9ee6b4.png" 
+              alt="Diagnosphere Logo" 
+              className="h-10 mr-2" 
+            />
           </Link>
 
           {/* Desktop Navigation */}
@@ -58,7 +62,6 @@ const Header = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="border-diagnosphere-primary/30 text-diagnosphere-light hover:bg-diagnosphere-primary/10"
                   onClick={logout}
                 >
                   <LogOut className="w-4 h-4 mr-2" />
@@ -66,7 +69,6 @@ const Header = () => {
                 </Button>
                 <Button
                   size="sm"
-                  className="bg-diagnosphere-primary hover:bg-diagnosphere-primary/90 text-diagnosphere-light"
                   asChild
                 >
                   <Link to="/dashboard">
@@ -80,14 +82,12 @@ const Header = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="border-diagnosphere-primary/30 text-diagnosphere-light hover:bg-diagnosphere-primary/10"
                   asChild
                 >
                   <Link to="/login">Log in</Link>
                 </Button>
                 <Button
                   size="sm"
-                  className="bg-diagnosphere-primary hover:bg-diagnosphere-primary/90 text-diagnosphere-light"
                   asChild
                 >
                   <Link to="/register">Sign up</Link>
@@ -141,7 +141,6 @@ const Header = () => {
             {isAuthenticated ? (
               <>
                 <Button
-                  className="bg-diagnosphere-primary hover:bg-diagnosphere-primary/90 text-diagnosphere-light w-full"
                   asChild
                 >
                   <Link to="/dashboard" onClick={() => setIsMenuOpen(false)}>
@@ -151,7 +150,6 @@ const Header = () => {
                 </Button>
                 <Button
                   variant="outline"
-                  className="border-diagnosphere-primary/30 text-diagnosphere-light hover:bg-diagnosphere-primary/10 w-full"
                   onClick={() => {
                     logout();
                     setIsMenuOpen(false);
@@ -164,7 +162,6 @@ const Header = () => {
             ) : (
               <>
                 <Button
-                  className="bg-diagnosphere-primary hover:bg-diagnosphere-primary/90 text-diagnosphere-light w-full"
                   asChild
                 >
                   <Link to="/register" onClick={() => setIsMenuOpen(false)}>
@@ -173,7 +170,6 @@ const Header = () => {
                 </Button>
                 <Button
                   variant="outline"
-                  className="border-diagnosphere-primary/30 text-diagnosphere-light hover:bg-diagnosphere-primary/10 w-full"
                   asChild
                 >
                   <Link to="/login" onClick={() => setIsMenuOpen(false)}>
