@@ -27,14 +27,13 @@ const Header = () => {
     <header className="fixed top-0 left-0 right-0 z-50 bg-diagnosphere-dark/80 backdrop-blur-lg border-b border-diagnosphere-primary/30">
       <div className="container mx-auto px-6">
         <div className="flex items-center justify-between h-20">
-          {/* Logo and Text */}
+          {/* Logo */}
           <Link to="/" className="flex items-center">
             <img 
               src="/lovable-uploads/9134d5e4-4e06-4def-9d60-b97b5f9ee6b4.png" 
               alt="Diagnosphere Logo" 
-              className="h-10" 
+              className="h-10 mr-2" 
             />
-            <span className="ml-2 text-diagnosphere-light/80 text-lg font-medium">Diagnosphere</span>
           </Link>
 
           {/* Desktop Navigation */}
