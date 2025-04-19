@@ -2,7 +2,7 @@
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
-const { connectWithRetry } = require('./config/db');
+const { connectWithRetry, connection } = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const diagnosisRoutes = require('./routes/diagnosisRoutes');
 const errorHandler = require('./middleware/errorHandler');
@@ -18,16 +18,20 @@ app.use(express.json());
 // Connect to MongoDB
 connectWithRetry();
 
+// Check database connection status
+connection.once('open', () => {
+  console.log('MongoDB database connection established successfully');
+});
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/diagnosis', diagnosisRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  const mongoose = require('mongoose');
   res.status(200).json({ 
     status: 'ok',
-    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+    mongodb: connection.readyState === 1 ? 'connected' : 'disconnected'
   });
 });
 

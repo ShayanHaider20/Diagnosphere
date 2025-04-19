@@ -26,6 +26,8 @@ mongoose.connection.on('disconnected', () => {
   connectWithRetry();
 });
 
+// Export the mongoose connection for reference in other files
 module.exports = {
-  connectWithRetry
+  connectWithRetry,
+  connection: mongoose.connection
 };

@@ -31,7 +31,14 @@ const register = async (req, res) => {
       password: hashedPassword,
     });
     
-    await user.save();
+    // Save user to database with explicit error handling
+    try {
+      await user.save();
+      console.log('User saved successfully:', user._id);
+    } catch (saveError) {
+      console.error('Error saving user to database:', saveError);
+      return res.status(500).json({ message: 'Failed to save user to database', error: saveError.message });
+    }
     
     // Create JWT token
     const token = jwt.sign(
