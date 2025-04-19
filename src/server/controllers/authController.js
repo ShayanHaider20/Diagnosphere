@@ -33,28 +33,28 @@ const register = async (req, res) => {
     
     // Save user to database with explicit error handling
     try {
-      await user.save();
-      console.log('User saved successfully:', user._id);
+      const savedUser = await user.save();
+      console.log('User saved successfully:', savedUser._id);
+      
+      // Create JWT token
+      const token = jwt.sign(
+        { id: savedUser._id },
+        JWT_SECRET,
+        { expiresIn: '7d' }
+      );
+      
+      res.status(201).json({
+        token,
+        user: {
+          id: savedUser._id,
+          name: savedUser.name,
+          email: savedUser.email,
+        },
+      });
     } catch (saveError) {
       console.error('Error saving user to database:', saveError);
       return res.status(500).json({ message: 'Failed to save user to database', error: saveError.message });
     }
-    
-    // Create JWT token
-    const token = jwt.sign(
-      { id: user._id },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-    
-    res.status(201).json({
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-      },
-    });
   } catch (error) {
     console.error('Registration error:', error);
     res.status(500).json({ message: 'Server error during registration' });
