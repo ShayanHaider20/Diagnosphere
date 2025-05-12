@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -10,6 +9,7 @@ import DiagnosisForm from '@/components/DiagnosisForm';
 import { Button } from '@/components/ui/button';
 import { diagnosisAPI } from '@/services/api';
 import { Upload, FileText, CheckCircle } from 'lucide-react';
+import * as tf from '@tensorflow/tfjs';
 
 const SkinCheck = () => {
   const navigate = useNavigate();
@@ -17,6 +17,21 @@ const SkinCheck = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [diagnosisId, setDiagnosisId] = useState<string | null>(null);
+  
+  // Initialize TensorFlow.js when the component mounts
+  useEffect(() => {
+    const initTf = async () => {
+      try {
+        // Initialize TensorFlow.js
+        await tf.ready();
+        console.log('TensorFlow.js initialized successfully');
+      } catch (error) {
+        console.error('Error initializing TensorFlow.js:', error);
+      }
+    };
+    
+    initTf();
+  }, []);
 
   const handleImageSelected = async (file: File) => {
     setSelectedImage(file);

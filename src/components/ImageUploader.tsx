@@ -4,6 +4,9 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
+import * as tf from '@tensorflow/tfjs';
+import { loadModel, preprocessImage, predictImage } from '@/utils/tensorflowUtils';
+import ModelLoader from '@/components/ModelLoader';
 
 interface ImageUploaderProps {
   onImageSelected: (file: File) => void;
@@ -15,19 +18,39 @@ const ImageUploader = ({ onImageSelected, className }: ImageUploaderProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [isModelLoading, setIsModelLoading] = useState(false);
+  const [model, setModel] = useState<tf.LayersModel | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   
+  // Load the model when component mounts
   useEffect(() => {
+    const initModel = async () => {
+      try {
+        setIsModelLoading(true);
+        // Replace with the actual path to your model.json file
+        const modelUrl = '/your-model/model.json';
+        const loadedModel = await loadModel(modelUrl);
+        setModel(loadedModel);
+        setIsModelLoading(false);
+      } catch (error) {
+        console.error('Failed to load model:', error);
+        toast.error('Failed to load the skin analysis model. Some features may be unavailable.');
+        setIsModelLoading(false);
+      }
+    };
+    
+    initModel();
+    
     return () => {
       if (selectedImage) {
         URL.revokeObjectURL(selectedImage);
       }
       stopCameraStream();
     };
-  }, [selectedImage]);
+  }, []);
 
   const stopCameraStream = () => {
     if (streamRef.current) {
@@ -111,7 +134,7 @@ const ImageUploader = ({ onImageSelected, className }: ImageUploaderProps) => {
     }, 'image/jpeg', 0.95);
   };
 
-  const processImage = (file: File) => {
+  const processImage = async (file: File) => {
     if (selectedImage) {
       URL.revokeObjectURL(selectedImage);
     }
@@ -119,16 +142,37 @@ const ImageUploader = ({ onImageSelected, className }: ImageUploaderProps) => {
     setIsLoading(true);
     
     const reader = new FileReader();
-    reader.onload = () => {
-      const imageUrl = URL.createObjectURL(file);
-      setSelectedImage(imageUrl);
-      onImageSelected(file);
-      setIsLoading(false);
+    reader.onload = async () => {
+      try {
+        const imageUrl = URL.createObjectURL(file);
+        setSelectedImage(imageUrl);
+        
+        // Analyze the image with TensorFlow if model is loaded
+        if (model) {
+          try {
+            const imageInput = await preprocessImage(imageUrl);
+            const prediction = await predictImage(model, imageInput);
+            console.log('Skin analysis prediction:', prediction);
+            toast.success("Image analyzed successfully!");
+          } catch (error) {
+            console.error('Error analyzing image:', error);
+          }
+        }
+        
+        // Continue with the original flow
+        onImageSelected(file);
+      } catch (error) {
+        console.error('Error processing image:', error);
+        toast.error('Failed to process the image.');
+      } finally {
+        setIsLoading(false);
+      }
     };
     
     reader.onerror = () => {
       setIsLoading(false);
       console.error('Error reading file');
+      toast.error('Failed to read the image file.');
     };
     
     reader.readAsDataURL(file);
@@ -155,6 +199,15 @@ const ImageUploader = ({ onImageSelected, className }: ImageUploaderProps) => {
       />
       
       <canvas ref={canvasRef} className="hidden" />
+      
+      {isModelLoading && (
+        <div className="mb-4">
+          <ModelLoader 
+            onModelLoaded={(loadedModel) => setModel(loadedModel)} 
+            modelPath="/your-model/model.json"
+          />
+        </div>
+      )}
       
       <AnimatePresence mode="wait">
         {isCameraOpen ? (
