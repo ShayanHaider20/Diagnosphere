@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { Upload, Camera, X, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -219,7 +218,7 @@ const ImageUploader = ({ onImageSelected, className }: ImageUploaderProps) => {
         <div className="mb-4">
           <ModelLoader 
             onModelLoaded={(loadedModel) => setModel(loadedModel)} 
-            modelPath="/your-model/model.json"
+            modelPath="/model/model.json"
           />
         </div>
       )}
