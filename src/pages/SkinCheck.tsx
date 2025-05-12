@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -17,6 +18,7 @@ const SkinCheck = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [diagnosisId, setDiagnosisId] = useState<string | null>(null);
+  const [tfReady, setTfReady] = useState(false);
   
   // Initialize TensorFlow.js when the component mounts
   useEffect(() => {
@@ -25,8 +27,10 @@ const SkinCheck = () => {
         // Initialize TensorFlow.js
         await tf.ready();
         console.log('TensorFlow.js initialized successfully');
+        setTfReady(true);
       } catch (error) {
         console.error('Error initializing TensorFlow.js:', error);
+        toast.error('Failed to initialize TensorFlow.js. Some features may be unavailable.');
       }
     };
     

@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from 'react';
 import { Upload, Camera, X, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -5,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import * as tf from '@tensorflow/tfjs';
-import { loadModel, preprocessImage, predictImage } from '@/utils/tensorflowUtils';
+import { loadModel, preprocessImage, predictImage, mapPredictionsToClasses } from '@/utils/tensorflowUtils';
 import ModelLoader from '@/components/ModelLoader';
 
 interface ImageUploaderProps {
@@ -30,11 +31,12 @@ const ImageUploader = ({ onImageSelected, className }: ImageUploaderProps) => {
     const initModel = async () => {
       try {
         setIsModelLoading(true);
-        // Replace with the actual path to your model.json file
-        const modelUrl = '/your-model/model.json';
+        // Path to the model.json file converted from the .keras file
+        const modelUrl = '/model/model.json';
         const loadedModel = await loadModel(modelUrl);
         setModel(loadedModel);
         setIsModelLoading(false);
+        console.log('Skin analysis model loaded successfully');
       } catch (error) {
         console.error('Failed to load model:', error);
         toast.error('Failed to load the skin analysis model. Some features may be unavailable.');
@@ -152,11 +154,24 @@ const ImageUploader = ({ onImageSelected, className }: ImageUploaderProps) => {
           try {
             const imageInput = await preprocessImage(imageUrl);
             const prediction = await predictImage(model, imageInput);
-            console.log('Skin analysis prediction:', prediction);
-            toast.success("Image analyzed successfully!");
+            
+            // Map predictions to class names
+            const mappedPredictions = mapPredictionsToClasses(prediction);
+            
+            console.log('Skin analysis prediction:', mappedPredictions);
+            
+            // Find the highest probability prediction
+            const entries = Object.entries(mappedPredictions);
+            const highestPrediction = entries.reduce((prev, curr) => 
+              curr[1] > prev[1] ? curr : prev
+            );
+            
+            toast.success(`Analysis complete: ${highestPrediction[0]} detected with ${Math.round(highestPrediction[1] * 100)}% confidence`);
           } catch (error) {
             console.error('Error analyzing image:', error);
           }
+        } else {
+          console.log('Model not loaded yet, skipping prediction');
         }
         
         // Continue with the original flow

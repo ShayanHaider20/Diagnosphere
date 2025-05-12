@@ -49,7 +49,7 @@ const ModelLoader = ({ onModelLoaded, modelPath }: ModelLoaderProps) => {
   return (
     <div className="w-full">
       <div className="flex justify-between mb-2 text-sm text-white/70">
-        <span>Loading diagnosis model...</span>
+        <span>Loading skin analysis model...</span>
         <span>{progress}%</span>
       </div>
       <Progress value={progress} className="w-full" />

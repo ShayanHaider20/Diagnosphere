@@ -84,3 +84,30 @@ export const predictImage = async (model: tf.LayersModel, input: tf.Tensor): Pro
     throw error;
   }
 };
+
+/**
+ * Map prediction index to skin condition class name
+ * @param predictions Array of prediction probabilities
+ * @returns Object with class names and their probabilities
+ */
+export const mapPredictionsToClasses = (predictions: Float32Array | Int32Array | Uint8Array): Record<string, number> => {
+  // These class names should be updated to match your actual model's output classes
+  const classNames = [
+    'Acne', 
+    'Eczema',
+    'Melanoma',
+    'Psoriasis',
+    'Rosacea',
+    'Vitiligo',
+    'Healthy Skin'
+  ];
+  
+  const result: Record<string, number> = {};
+  
+  // Map each prediction to its class name
+  for (let i = 0; i < predictions.length && i < classNames.length; i++) {
+    result[classNames[i]] = Number(predictions[i].toFixed(4));
+  }
+  
+  return result;
+};
