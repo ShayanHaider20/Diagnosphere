@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -10,6 +9,7 @@ import { Check } from 'lucide-react';
 
 interface DiagnosisFormProps {
   onSubmit: (data: FormData) => void;
+  prediction?: any; // Added prediction prop
 }
 
 interface FormData {
@@ -25,7 +25,7 @@ interface FormData {
   additionalInfo: string;
 }
 
-const DiagnosisForm = ({ onSubmit }: DiagnosisFormProps) => {
+const DiagnosisForm = ({ onSubmit, prediction }: DiagnosisFormProps) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<FormData>({
     duration: '',
@@ -319,6 +319,16 @@ const DiagnosisForm = ({ onSubmit }: DiagnosisFormProps) => {
       <div className="bg-white/5 border border-white/10 rounded-xl p-6 backdrop-blur-lg">
         <h2 className="text-2xl font-semibold text-white mb-2">{currentFormStep.title}</h2>
         <p className="text-white/70 mb-6">{currentFormStep.description}</p>
+
+        {/* Display prediction result if available */}
+        {prediction && (
+          <div className="mb-6 p-4 bg-diagnosphere-primary/10 border border-diagnosphere-primary/30 rounded-lg">
+            <h3 className="font-medium text-diagnosphere-primary mb-2">AI Analysis Result:</h3>
+            <p className="text-white">
+              <span className="font-semibold">{prediction.prediction}</span> detected with {prediction.confidence.toFixed(2)}% confidence
+            </p>
+          </div>
+        )}
 
         <motion.div
           key={currentStep}
