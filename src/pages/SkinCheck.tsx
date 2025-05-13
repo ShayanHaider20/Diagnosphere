@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -10,7 +10,6 @@ import DiagnosisForm from '@/components/DiagnosisForm';
 import { Button } from '@/components/ui/button';
 import { diagnosisAPI } from '@/services/api';
 import { Upload, FileText, CheckCircle } from 'lucide-react';
-import * as tf from '@tensorflow/tfjs';
 
 const SkinCheck = () => {
   const navigate = useNavigate();
@@ -18,34 +17,18 @@ const SkinCheck = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [diagnosisId, setDiagnosisId] = useState<string | null>(null);
-  const [tfReady, setTfReady] = useState(false);
+  const [prediction, setPrediction] = useState<string | null>(null);
   
-  // Initialize TensorFlow.js when the component mounts
-  useEffect(() => {
-    const initTf = async () => {
-      try {
-        // Initialize TensorFlow.js
-        await tf.ready();
-        console.log('TensorFlow.js initialized successfully');
-        setTfReady(true);
-      } catch (error) {
-        console.error('Error initializing TensorFlow.js:', error);
-        toast.error('Failed to initialize TensorFlow.js. Some features may be unavailable.');
-      }
-    };
-    
-    initTf();
-  }, []);
-
   const handleImageSelected = async (file: File) => {
     setSelectedImage(file);
     setIsLoading(true);
     
     try {
-      // Upload the image to the server
+      // Upload the image to the Flask server
       const response = await diagnosisAPI.uploadImage(file);
       setDiagnosisId(response.diagnosisId);
-      toast.success("Image uploaded successfully!");
+      setPrediction(response.prediction);
+      toast.success(`Prediction: ${response.prediction}`);
       // Move to the next step after successful upload
       setCurrentStep(1);
     } catch (error) {
@@ -65,11 +48,16 @@ const SkinCheck = () => {
     setIsLoading(true);
     
     try {
-      // Submit symptom data to the server
-      await diagnosisAPI.submitSymptoms(diagnosisId, formData);
+      // Submit symptom data
+      const result = await diagnosisAPI.submitSymptoms(diagnosisId, formData);
       toast.success("Symptoms submitted successfully!");
-      // Navigate to results page
-      navigate(`/diagnosis-results/${diagnosisId}`);
+      // Navigate to results page with the prediction
+      navigate(`/diagnosis-results/${diagnosisId}`, { 
+        state: { 
+          prediction,
+          symptoms: formData
+        }
+      });
     } catch (error) {
       console.error("Error submitting symptoms:", error);
       toast.error("Failed to submit symptoms. Please try again.");
@@ -117,6 +105,13 @@ const SkinCheck = () => {
             >
               Our AI-powered tool analyzes your skin and provides personalized recommendations. Follow the steps below to get started.
             </motion.p>
+
+            {prediction && (
+              <div className="bg-diagnosphere-primary/20 border border-diagnosphere-primary/40 rounded-lg p-4 mb-8 text-center">
+                <h3 className="font-medium text-diagnosphere-primary text-lg">Prediction Result</h3>
+                <p className="text-white text-xl mt-1">{prediction}</p>
+              </div>
+            )}
 
             <div className="flex justify-between mb-12">
               {steps.map((step, index) => (

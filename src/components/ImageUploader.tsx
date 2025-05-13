@@ -1,12 +1,10 @@
-import { useState, useRef, useEffect } from 'react';
+
+import { useState, useRef } from 'react';
 import { Upload, Camera, X, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import * as tf from '@tensorflow/tfjs';
-import { loadModel, preprocessImage, predictImage, mapPredictionsToClasses } from '@/utils/tensorflowUtils';
-import ModelLoader from '@/components/ModelLoader';
 
 interface ImageUploaderProps {
   onImageSelected: (file: File) => void;
@@ -18,41 +16,11 @@ const ImageUploader = ({ onImageSelected, className }: ImageUploaderProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const [isModelLoading, setIsModelLoading] = useState(false);
-  const [model, setModel] = useState<tf.LayersModel | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   
-  // Load the model when component mounts
-  useEffect(() => {
-    const initModel = async () => {
-      try {
-        setIsModelLoading(true);
-        // Path to the model.json file converted from the .keras file
-        const modelUrl = '/model/model.json';
-        const loadedModel = await loadModel(modelUrl);
-        setModel(loadedModel);
-        setIsModelLoading(false);
-        console.log('Skin analysis model loaded successfully');
-      } catch (error) {
-        console.error('Failed to load model:', error);
-        toast.error('Failed to load the skin analysis model. Some features may be unavailable.');
-        setIsModelLoading(false);
-      }
-    };
-    
-    initModel();
-    
-    return () => {
-      if (selectedImage) {
-        URL.revokeObjectURL(selectedImage);
-      }
-      stopCameraStream();
-    };
-  }, []);
-
   const stopCameraStream = () => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
@@ -148,37 +116,11 @@ const ImageUploader = ({ onImageSelected, className }: ImageUploaderProps) => {
         const imageUrl = URL.createObjectURL(file);
         setSelectedImage(imageUrl);
         
-        // Analyze the image with TensorFlow if model is loaded
-        if (model) {
-          try {
-            const imageInput = await preprocessImage(imageUrl);
-            const prediction = await predictImage(model, imageInput);
-            
-            // Map predictions to class names
-            const mappedPredictions = mapPredictionsToClasses(prediction);
-            
-            console.log('Skin analysis prediction:', mappedPredictions);
-            
-            // Find the highest probability prediction
-            const entries = Object.entries(mappedPredictions);
-            const highestPrediction = entries.reduce((prev, curr) => 
-              curr[1] > prev[1] ? curr : prev
-            );
-            
-            toast.success(`Analysis complete: ${highestPrediction[0]} detected with ${Math.round(highestPrediction[1] * 100)}% confidence`);
-          } catch (error) {
-            console.error('Error analyzing image:', error);
-          }
-        } else {
-          console.log('Model not loaded yet, skipping prediction');
-        }
-        
-        // Continue with the original flow
+        // Send the image to the server for processing via the parent component
         onImageSelected(file);
       } catch (error) {
         console.error('Error processing image:', error);
         toast.error('Failed to process the image.');
-      } finally {
         setIsLoading(false);
       }
     };
@@ -213,15 +155,6 @@ const ImageUploader = ({ onImageSelected, className }: ImageUploaderProps) => {
       />
       
       <canvas ref={canvasRef} className="hidden" />
-      
-      {isModelLoading && (
-        <div className="mb-4">
-          <ModelLoader 
-            onModelLoaded={(loadedModel) => setModel(loadedModel)} 
-            modelPath="/model/model.json"
-          />
-        </div>
-      )}
       
       <AnimatePresence mode="wait">
         {isCameraOpen ? (

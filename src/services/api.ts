@@ -2,9 +2,9 @@
 import axios from 'axios';
 import { toast } from 'sonner';
 
-// Create a base axios instance with the MongoDB URI
+// Create a base axios instance with the Flask backend URL
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api', // We'll create an Express backend server
+  baseURL: 'http://localhost:5000/api', // Flask backend server
   headers: {
     'Content-Type': 'application/json',
   },
@@ -94,20 +94,35 @@ export const diagnosisAPI = {
     const formData = new FormData();
     formData.append('image', image);
     
-    const response = await api.post('/diagnosis/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data;
+    try {
+      const response = await axios.post('http://localhost:5000/classify', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return {
+        diagnosisId: 'temp-id', // This will be managed by the Flask backend in a real app
+        imageUrl: URL.createObjectURL(image),
+        prediction: response.data.result
+      };
+    } catch (error) {
+      console.error("Error classifying image:", error);
+      throw error;
+    }
   },
   
   submitSymptoms: async (diagnosisId: string, symptoms: Record<string, any>) => {
-    const response = await api.post(`/diagnosis/${diagnosisId}/symptoms`, symptoms);
-    return response.data;
+    // For now we'll just return the symptoms combined with the diagnosisId
+    // In a full implementation, this would send the data to the Flask backend
+    return {
+      diagnosisId,
+      symptoms,
+      success: true
+    };
   },
   
   getResults: async (diagnosisId: string) => {
+    // In a real app, this would fetch results from the Flask backend
     const response = await api.get(`/diagnosis/${diagnosisId}/results`);
     return response.data;
   },
