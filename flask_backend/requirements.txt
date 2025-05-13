@@ -1,0 +1,7 @@
+
+flask==2.2.3
+flask-cors==3.0.10
+pillow==9.4.0
+# Uncomment these lines to use your Keras model:
+# tensorflow==2.12.0
+# numpy==1.23.5

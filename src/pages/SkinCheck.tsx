@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -7,10 +7,8 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ImageUploader from '@/components/ImageUploader';
 import DiagnosisForm from '@/components/DiagnosisForm';
-import { Button } from '@/components/ui/button';
-import { diagnosisAPI } from '@/services/api';
 import { Upload, FileText, CheckCircle } from 'lucide-react';
-import * as tf from '@tensorflow/tfjs';
+import { diagnosisAPI } from '@/services/api';
 
 const SkinCheck = () => {
   const navigate = useNavigate();
@@ -18,25 +16,7 @@ const SkinCheck = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [diagnosisId, setDiagnosisId] = useState<string | null>(null);
-  const [tfReady, setTfReady] = useState(false);
   
-  // Initialize TensorFlow.js when the component mounts
-  useEffect(() => {
-    const initTf = async () => {
-      try {
-        // Initialize TensorFlow.js
-        await tf.ready();
-        console.log('TensorFlow.js initialized successfully');
-        setTfReady(true);
-      } catch (error) {
-        console.error('Error initializing TensorFlow.js:', error);
-        toast.error('Failed to initialize TensorFlow.js. Some features may be unavailable.');
-      }
-    };
-    
-    initTf();
-  }, []);
-
   const handleImageSelected = async (file: File) => {
     setSelectedImage(file);
     setIsLoading(true);
@@ -57,22 +37,23 @@ const SkinCheck = () => {
   };
 
   const handleFormSubmit = async (formData: any) => {
-    if (!diagnosisId) {
-      toast.error("Missing diagnosis ID. Please restart the process.");
+    if (!diagnosisId || !selectedImage) {
+      toast.error("Missing diagnosis ID or image. Please restart the process.");
       return;
     }
     
     setIsLoading(true);
     
     try {
-      // Submit symptom data to the server
-      await diagnosisAPI.submitSymptoms(diagnosisId, formData);
-      toast.success("Symptoms submitted successfully!");
+      // Submit symptom data and image to the Flask backend for analysis
+      const response = await diagnosisAPI.submitDiagnosis(diagnosisId, formData, selectedImage);
+      toast.success("Analysis completed successfully!");
+      
       // Navigate to results page
-      navigate(`/diagnosis-results/${diagnosisId}`);
+      navigate(`/diagnosis-results/${response.diagnosisId}`);
     } catch (error) {
-      console.error("Error submitting symptoms:", error);
-      toast.error("Failed to submit symptoms. Please try again.");
+      console.error("Error submitting diagnosis:", error);
+      toast.error("Failed to analyze. Please try again.");
     } finally {
       setIsLoading(false);
     }

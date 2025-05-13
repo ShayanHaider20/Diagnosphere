@@ -2,9 +2,9 @@
 import axios from 'axios';
 import { toast } from 'sonner';
 
-// Create a base axios instance with the MongoDB URI
+// Create a base axios instance with the Flask backend URL
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api', // We'll create an Express backend server
+  baseURL: 'http://localhost:5000/api', // Flask backend server
   headers: {
     'Content-Type': 'application/json',
   },
@@ -31,7 +31,7 @@ api.interceptors.response.use(
     // Handle network errors (server not running, etc.)
     if (error.code === 'ERR_NETWORK') {
       return Promise.reject({
-        message: "Cannot connect to server. Please make sure the backend is running."
+        message: "Cannot connect to Flask server. Please make sure the backend is running."
       });
     }
     
@@ -102,8 +102,26 @@ export const diagnosisAPI = {
     return response.data;
   },
   
-  submitSymptoms: async (diagnosisId: string, symptoms: Record<string, any>) => {
-    const response = await api.post(`/diagnosis/${diagnosisId}/symptoms`, symptoms);
+  submitDiagnosis: async (diagnosisId: string, symptoms: Record<string, any>, image: File) => {
+    const formData = new FormData();
+    formData.append('image', image);
+    
+    // Add all symptom data to formData
+    for (const [key, value] of Object.entries(symptoms)) {
+      if (Array.isArray(value)) {
+        for (const item of value) {
+          formData.append(`${key}[]`, item);
+        }
+      } else {
+        formData.append(key, String(value));
+      }
+    }
+    
+    const response = await api.post(`/diagnosis/${diagnosisId}/analyze`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data;
   },
   
