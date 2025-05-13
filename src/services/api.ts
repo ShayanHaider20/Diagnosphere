@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 
 // Create a base axios instance with the MongoDB URI
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api', // We'll create an Express backend server
+  baseURL: 'http://localhost:5000/api', // Pointing to our Flask backend
   headers: {
     'Content-Type': 'application/json',
   },
@@ -90,11 +90,21 @@ export const authAPI = {
 
 // Skin disease diagnosis endpoints
 export const diagnosisAPI = {
+  loadModel: async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/api/load-model');
+      return response.data;
+    } catch (error) {
+      console.error('Error loading model:', error);
+      throw error;
+    }
+  },
+  
   uploadImage: async (image: File) => {
     const formData = new FormData();
     formData.append('image', image);
     
-    const response = await api.post('/diagnosis/upload', formData, {
+    const response = await axios.post('http://localhost:5000/api/diagnose', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

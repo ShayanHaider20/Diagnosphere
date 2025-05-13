@@ -1,58 +1,25 @@
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { Upload, Camera, X, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import * as tf from '@tensorflow/tfjs';
-import { loadModel, preprocessImage, predictImage, mapPredictionsToClasses } from '@/utils/tensorflowUtils';
-import ModelLoader from '@/components/ModelLoader';
 
 interface ImageUploaderProps {
   onImageSelected: (file: File) => void;
   className?: string;
+  isLoading?: boolean;
 }
 
-const ImageUploader = ({ onImageSelected, className }: ImageUploaderProps) => {
+const ImageUploader = ({ onImageSelected, className, isLoading = false }: ImageUploaderProps) => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const [isModelLoading, setIsModelLoading] = useState(false);
-  const [model, setModel] = useState<tf.LayersModel | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  
-  // Load the model when component mounts
-  useEffect(() => {
-    const initModel = async () => {
-      try {
-        setIsModelLoading(true);
-        // Path to the model.json file converted from the .keras file
-        const modelUrl = '/model/model.json';
-        const loadedModel = await loadModel(modelUrl);
-        setModel(loadedModel);
-        setIsModelLoading(false);
-        console.log('Skin analysis model loaded successfully');
-      } catch (error) {
-        console.error('Failed to load model:', error);
-        toast.error('Failed to load the skin analysis model. Some features may be unavailable.');
-        setIsModelLoading(false);
-      }
-    };
-    
-    initModel();
-    
-    return () => {
-      if (selectedImage) {
-        URL.revokeObjectURL(selectedImage);
-      }
-      stopCameraStream();
-    };
-  }, []);
 
   const stopCameraStream = () => {
     if (streamRef.current) {
@@ -141,56 +108,16 @@ const ImageUploader = ({ onImageSelected, className }: ImageUploaderProps) => {
       URL.revokeObjectURL(selectedImage);
     }
 
-    setIsLoading(true);
-    
-    const reader = new FileReader();
-    reader.onload = async () => {
-      try {
-        const imageUrl = URL.createObjectURL(file);
-        setSelectedImage(imageUrl);
-        
-        // Analyze the image with TensorFlow if model is loaded
-        if (model) {
-          try {
-            const imageInput = await preprocessImage(imageUrl);
-            const prediction = await predictImage(model, imageInput);
-            
-            // Map predictions to class names
-            const mappedPredictions = mapPredictionsToClasses(prediction);
-            
-            console.log('Skin analysis prediction:', mappedPredictions);
-            
-            // Find the highest probability prediction
-            const entries = Object.entries(mappedPredictions);
-            const highestPrediction = entries.reduce((prev, curr) => 
-              curr[1] > prev[1] ? curr : prev
-            );
-            
-            toast.success(`Analysis complete: ${highestPrediction[0]} detected with ${Math.round(highestPrediction[1] * 100)}% confidence`);
-          } catch (error) {
-            console.error('Error analyzing image:', error);
-          }
-        } else {
-          console.log('Model not loaded yet, skipping prediction');
-        }
-        
-        // Continue with the original flow
-        onImageSelected(file);
-      } catch (error) {
-        console.error('Error processing image:', error);
-        toast.error('Failed to process the image.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    reader.onerror = () => {
-      setIsLoading(false);
-      console.error('Error reading file');
-      toast.error('Failed to read the image file.');
-    };
-    
-    reader.readAsDataURL(file);
+    try {
+      const imageUrl = URL.createObjectURL(file);
+      setSelectedImage(imageUrl);
+      
+      // Pass the file to parent component for further processing
+      onImageSelected(file);
+    } catch (error) {
+      console.error('Error processing image:', error);
+      toast.error('Failed to process the image.');
+    }
   };
 
   const removeImage = () => {
@@ -214,15 +141,6 @@ const ImageUploader = ({ onImageSelected, className }: ImageUploaderProps) => {
       />
       
       <canvas ref={canvasRef} className="hidden" />
-      
-      {isModelLoading && (
-        <div className="mb-4">
-          <ModelLoader 
-            onModelLoaded={(loadedModel) => setModel(loadedModel)} 
-            modelPath="/your-model/model.json"
-          />
-        </div>
-      )}
       
       <AnimatePresence mode="wait">
         {isCameraOpen ? (
@@ -313,6 +231,17 @@ const ImageUploader = ({ onImageSelected, className }: ImageUploaderProps) => {
             exit={{ opacity: 0, scale: 0.95 }}
             className="relative rounded-xl overflow-hidden border border-white/20 bg-white/5"
           >
+            {isLoading && (
+              <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-10">
+                <div className="text-center">
+                  <div className="inline-block p-3 rounded-full bg-diagnosphere-primary/20 mb-3">
+                    <div className="w-6 h-6 border-2 border-diagnosphere-primary border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                  <p className="text-white font-medium">Analyzing image...</p>
+                </div>
+              </div>
+            )}
+            
             <img
               src={selectedImage}
               alt="Selected skin"
@@ -324,12 +253,13 @@ const ImageUploader = ({ onImageSelected, className }: ImageUploaderProps) => {
               onClick={removeImage}
               className="absolute top-3 right-3 p-2 h-auto bg-black/60 hover:bg-black/80 rounded-full"
               variant="ghost"
+              disabled={isLoading}
             >
               <X className="h-5 w-5" />
             </Button>
             <div className="absolute bottom-0 left-0 right-0 p-4">
               <p className="text-white font-medium">Image uploaded successfully</p>
-              <p className="text-gray-300 text-sm">You can now proceed to the next step</p>
+              <p className="text-gray-300 text-sm">Analysis in progress...</p>
             </div>
           </motion.div>
         )}

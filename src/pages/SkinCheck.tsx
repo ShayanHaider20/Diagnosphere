@@ -10,31 +10,32 @@ import DiagnosisForm from '@/components/DiagnosisForm';
 import { Button } from '@/components/ui/button';
 import { diagnosisAPI } from '@/services/api';
 import { Upload, FileText, CheckCircle } from 'lucide-react';
-import * as tf from '@tensorflow/tfjs';
 
 const SkinCheck = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [modelLoading, setModelLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [diagnosisId, setDiagnosisId] = useState<string | null>(null);
-  const [tfReady, setTfReady] = useState(false);
+  const [prediction, setPrediction] = useState<any>(null);
   
-  // Initialize TensorFlow.js when the component mounts
+  // Load the model when component mounts
   useEffect(() => {
-    const initTf = async () => {
+    const loadModel = async () => {
       try {
-        // Initialize TensorFlow.js
-        await tf.ready();
-        console.log('TensorFlow.js initialized successfully');
-        setTfReady(true);
+        setModelLoading(true);
+        await diagnosisAPI.loadModel();
+        toast.success("Skin analysis model loaded successfully!");
+        setModelLoading(false);
       } catch (error) {
-        console.error('Error initializing TensorFlow.js:', error);
-        toast.error('Failed to initialize TensorFlow.js. Some features may be unavailable.');
+        console.error('Error loading model:', error);
+        toast.error("Failed to load the skin analysis model. Some features may be unavailable.");
+        setModelLoading(false);
       }
     };
     
-    initTf();
+    loadModel();
   }, []);
 
   const handleImageSelected = async (file: File) => {
@@ -42,15 +43,26 @@ const SkinCheck = () => {
     setIsLoading(true);
     
     try {
-      // Upload the image to the server
+      // Upload the image to the Flask backend for diagnosis
       const response = await diagnosisAPI.uploadImage(file);
-      setDiagnosisId(response.diagnosisId);
-      toast.success("Image uploaded successfully!");
-      // Move to the next step after successful upload
-      setCurrentStep(1);
+      
+      if (response.status === 'success') {
+        // Store the prediction
+        setPrediction(response);
+        toast.success(`Analysis complete: ${response.prediction} detected with ${response.confidence.toFixed(2)}% confidence`);
+        
+        // Generate a temporary diagnosis ID
+        const tempId = 'diag-' + Date.now().toString();
+        setDiagnosisId(tempId);
+        
+        // Move to the next step after successful upload
+        setCurrentStep(1);
+      } else {
+        throw new Error(response.message || 'Failed to analyze image');
+      }
     } catch (error) {
-      console.error("Error uploading image:", error);
-      toast.error("Failed to upload image. Please try again.");
+      console.error("Error analyzing image:", error);
+      toast.error("Failed to analyze image. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -65,11 +77,16 @@ const SkinCheck = () => {
     setIsLoading(true);
     
     try {
-      // Submit symptom data to the server
-      await diagnosisAPI.submitSymptoms(diagnosisId, formData);
-      toast.success("Symptoms submitted successfully!");
-      // Navigate to results page
-      navigate(`/diagnosis-results/${diagnosisId}`);
+      // In a real implementation, you would submit form data to the server
+      // For now, we'll skip this step and just navigate to results
+      
+      // Navigate to results page with the diagnosis ID
+      navigate(`/diagnosis-results/${diagnosisId}`, { 
+        state: { 
+          prediction: prediction,
+          formData: formData
+        }
+      });
     } catch (error) {
       console.error("Error submitting symptoms:", error);
       toast.error("Failed to submit symptoms. Please try again.");
@@ -84,14 +101,14 @@ const SkinCheck = () => {
       title: 'Upload Image',
       description: 'Upload a clear photo of the affected skin area',
       icon: <Upload className="w-5 h-5" />,
-      component: <ImageUploader onImageSelected={handleImageSelected} />,
+      component: <ImageUploader onImageSelected={handleImageSelected} isLoading={isLoading} />,
     },
     {
       id: 'symptoms',
       title: 'Symptom Details',
       description: 'Tell us more about your symptoms',
       icon: <FileText className="w-5 h-5" />,
-      component: <DiagnosisForm onSubmit={handleFormSubmit} />,
+      component: <DiagnosisForm onSubmit={handleFormSubmit} prediction={prediction} />,
     },
   ];
 
@@ -117,6 +134,16 @@ const SkinCheck = () => {
             >
               Our AI-powered tool analyzes your skin and provides personalized recommendations. Follow the steps below to get started.
             </motion.p>
+
+            {/* Model loading indicator */}
+            {modelLoading && (
+              <div className="mb-6 text-center">
+                <div className="inline-block p-3 rounded-full bg-diagnosphere-primary/20 animate-pulse mb-3">
+                  <div className="w-6 h-6 border-2 border-diagnosphere-primary border-t-transparent rounded-full animate-spin"></div>
+                </div>
+                <p className="text-diagnosphere-primary">Loading skin analysis model...</p>
+              </div>
+            )}
 
             <div className="flex justify-between mb-12">
               {steps.map((step, index) => (
